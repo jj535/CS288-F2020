@@ -1,0 +1,51 @@
+#!/bin/bash
+
+#average computes average and set it to global variable avg
+function average() {
+    value=0
+    cnt=0
+    for x in `$@`; do
+	if [[ -d $x ]]; then
+	    local tmpList=(`ls -l $x`)
+	    [[ "${tmpList[1]}" -ne "0" ]] && value=$[${tmpList[6]}+$value]
+	elif [[ -f $x ]]; then
+	    local tmpList=(`ls -l $x`)
+	    echo ${tmpList[1]} ${tmpList[4]}
+	    value=$[$value+${tmpList[4]}]
+	fi
+	((cnt++))
+    done
+
+    #if there's 0 parament is passed, then I will just say average is 0
+    if [ "$cnt" -ne "0" ]; then
+	avg=$((value/cnt))
+	echo $avg
+    else
+	avg=0
+    fi
+}
+
+#this function filters any file/directory which has size less than avg(global variable)
+function filter() {
+    cd $@
+    for x in `ls $@`; do
+   	if [[ -d $x ]]; then
+	    local tmpList=(`ls -l $x`)
+	    [[ "${tmpList[1]}" -ne "0" ]] && filtered_list+=(${tmpList[10]})
+	elif [[ -f $x ]]; then
+	    local tmpList=(`ls -l $x`)
+	    [[ "${tmpList[4]}" -gt avg ]] && filtered_list+=(${tmpList[8]})
+	fi
+    done
+}
+
+
+#main calls average to get avg and filters file/directory, then prints filtered list
+function main() {
+    filtered_list=()
+    average $@
+    filter $@
+    echo ${filtered_list[@]}
+}
+
+main $@
